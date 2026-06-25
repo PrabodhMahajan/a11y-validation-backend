@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: a11y-validation-backend
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    disk:
+      name: sessions-storage
+      mountPath: /opt/render/project/src/sessions
+      sizeGB: 1
+    envVars:
+      - key: PORT
+        value: 3001
+      - key: NODE_ENV
+        value: production
