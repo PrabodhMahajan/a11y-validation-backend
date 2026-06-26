@@ -55,9 +55,13 @@ function computeMetrics(session) {
   const Z = (session.humanAdded || []).length;
   const disputed = (session.humanDisputed || []).length;
   const total = Y + Z;
-  const N = total > 0 ? Math.round((X / total) * 100) : 0;
+  // N% = what fraction of ALL real barriers (automated + human-added) did automation catch?
+  // N = X / (X + Z) — always 0-100%
+  // When Z=0, N=100% (automation found everything we know about)
+  // As humans add more Z findings, N decreases, showing automation's true coverage gap
+  const N = (X + Z) > 0 ? Math.round((X / (X + Z)) * 100) : 0;
   const falsePositiveRate = X > 0 ? Math.round((disputed / X) * 100) : 0;
-  return { X, Y, Z, N, falsePositiveRate, disputed };
+  return { X, Y, Z, N, falsePositiveRate, disputed, total: X + Z };
 }
 
 function escapeHtml(str) {
@@ -264,11 +268,11 @@ function generateReport(session) {
 
   <div class="formula-box">
     <h2>📐 Accuracy formula</h2>
-    <div class="formula">N% = X ÷ (Y + Z) = ${metrics.X} ÷ (${metrics.Y} + ${metrics.Z}) = ${metrics.N}%</div>
+    <div class="formula">N% = X ÷ (X + Z) = ${metrics.X} ÷ (${metrics.X} + ${metrics.Z}) = ${metrics.N}%</div>
     <p style="font-size:13px;color:var(--ink-soft);margin:0">
       Automated testing (Playwright + axe-core, Deque Systems) detected <strong>${metrics.X} violation instances</strong>.
       Human validation confirmed <strong>${metrics.Y}</strong> as genuine barriers and identified <strong>${metrics.Z} additional barriers</strong> invisible to automation.
-      Automated tools captured approximately <strong>${metrics.N}% of total real barriers</strong>.
+      Automated tools captured approximately <strong>${metrics.N}% of total real barriers</strong> (${metrics.X} automated ÷ ${metrics.X + metrics.Z} total known barriers).
       Reference: GDS (2017) benchmark — best automated tool detects 40% of barriers.
       This session: ${metrics.N}% ${metrics.N > 40 ? "(above benchmark)" : metrics.N < 40 ? "(below benchmark)" : "(matches benchmark)"}.
     </p>
